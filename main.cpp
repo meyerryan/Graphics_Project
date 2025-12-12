@@ -459,6 +459,50 @@ int tri_test() {
 }
 
 int final_submission() {
+    hittable_list world;
+
+    int x = 50;
+    int z = 100;
+    double tile_scale = 1.0;
+    double height_scale = 2.0;;
+
+    double height_map[x][z];
+
+
+
+    for (int i = 0; i < x; i++) {
+        for (int j = 0; j < z; j++) {
+            double x_percent = i / (double)(x - 1);
+            double z_percent = j / (double)(z - 1);
+
+            double random_seed = rand() % 101;
+            double seed_percent = random_seed / 100.0;
+            double scaled_value = seed_percent * height_scale * x_percent; // Scale heights between 0 and 5
+            height_map[i][j] = scaled_value;
+            std::cout << height_map[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    auto list = make_shared<hittable_list>();
+
+    for (int i = 0; i < x; i = i + 1) {
+        for (int j = 0; j < z; j = j + 1) {
+            point3 v0 = point3(i * tile_scale, height_map[i][j], j * tile_scale);
+            point3 v1 = point3((i + 1) * tile_scale, height_map[i + 1][j], j * tile_scale);
+            point3 v2 = point3(i * tile_scale, height_map[i][j + 1], (j + 1) * tile_scale);
+            point3 v3 = point3((i + 1) * tile_scale, height_map[i + 1][j + 1], (j + 1) * tile_scale);
+            list->add(make_shared<tri>(v0, v1, v2, make_shared<lambertian>(color(i/(double)x, 1, j/(double)z))));
+            list->add(make_shared<tri>(v2, v1, v3, make_shared<lambertian>(color(i/(double)x, 0.8, j/(double)z))));
+        
+        }
+    }
+
+    shared_ptr<hittable> terrain = make_shared<bvh_node>(*list);
+
+    world.add(terrain);
+
+
 
 
         // Setup camera
@@ -468,21 +512,22 @@ int final_submission() {
     cam.image_width       = 400;
     cam.samples_per_pixel = 30;
     cam.max_depth         = 50;
-    cam.background = color(0,0,0);
+    cam.background = sky_blue;
 
-    cam.vfov     = 50;
-    cam.lookfrom = point3(0, 20, -25);
-    cam.lookat   = point3(0, 0, 10);
+    cam.vfov     = 80;
+    cam.lookfrom = point3(x / 2, 5, 20);
+    cam.lookat   = point3(x / 2, 0, 5);
     cam.vup      = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
 
     cam.render(world);
+    
 }
 
 
 int main() {
-    switch(10) {
+    switch(11) {
         case 1: bouncing_spheres(); break;
         case 2: checkered_spheres(); break;
         case 3: earth(); break;
@@ -493,6 +538,7 @@ int main() {
         case 8: cornell_smoke(); break;
         case 9: final_scene(400,   250,  4); break;
         case 10: tri_test(); break;
+        case 11: final_submission(); break;
     }
 }
 
