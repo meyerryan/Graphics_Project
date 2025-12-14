@@ -423,8 +423,6 @@ void tri_test() {
     auto panel_surface = make_shared<lambertian>(panel_texture);
     
     mesh bot = mesh(stl_file, green);
-
-    // Optional acceleration
     shared_ptr<hittable> bot_ptr = make_shared<bvh_node>(*bot.get_geometry());
 
     // Instance transforms
@@ -496,33 +494,25 @@ void buildPerlinMap(double noise_map[200][200], int width, int height, double sc
 }
 
 void final_submission() {
-    hittable_list world;
-
-    
+    hittable_list world; 
     const int width = 200;
     const int height = 200;
 
     // Terrain parameters
     double terrain_noise_map[height][width];
-    double terrain_noise_map_first[height][width];
-    double terrain_noise_map_second[height][width];
-
     double tile_scale = 1.0;
     double noise_scale = 0.05;
     double max_height = 5.0; 
-    
-    
     double sky_noise_map[height][width];
     
     
     //build height map from perlin noise
-    buildPerlinMap(terrain_noise_map, width + 1, height + 1, noise_scale, max_height);
-    buildPerlinMap(sky_noise_map, width + 1, height + 1, noise_scale, max_height);
+    buildPerlinMap(terrain_noise_map, width, height, noise_scale, max_height);
 
-    auto list = make_shared<hittable_list>();
-
+    
 
     //build terrain from height map
+    auto list = make_shared<hittable_list>();
     for (int i = 0; i < height; i = i + 1) {
         for (int j = 0; j < width; j = j + 1) {
             //build the two tris for each tile
@@ -564,36 +554,34 @@ void final_submission() {
     world.add(sky);
 
 
-    //build sun 
-    auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 8.0);
-    auto sun = make_shared<sphere>(point3(100, -10, 170), 30, sun_surface);
+    //build suns 
+    auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 80.0);
+    auto sun = make_shared<sphere>(point3(40, 25, 150), 10, sun_surface);
     world.add(sun);
+
+    auto mini_sun_surface = make_shared<diffuse_light>(dark_red * 5.0);
+    auto mini_sun = make_shared<sphere>(point3(20, 35, 150), 5, mini_sun_surface);
+    world.add(mini_sun);
     
+
     //build background fog
     auto fog_boundary = make_shared<sphere>(point3(100, -10, 170), 95, make_shared<lambertian>(blue_gray));
-    world.add(make_shared<constant_medium>(fog_boundary, 0.00001, blue_gray));
-
-
+    world.add(make_shared<constant_medium>(fog_boundary, 0.000001, dark_purple));
 
     
-        // Setup camera
+    // Setup camera
     camera cam;
-
     cam.aspect_ratio      = 16.0/9.0;
-    cam.image_width       = 400;
-    cam.samples_per_pixel = 50;
+    cam.image_width       = 500;
+    cam.samples_per_pixel = 200;
     cam.max_depth         = 50;
-    cam.background = dark_purple * 0.5;
-
+    cam.background = dark_purple * 1.1;
     cam.vfov     = 40;
     cam.lookfrom = point3(width / 2, 15, 0);
     cam.lookat   = point3(width / 2, 0, 100);
     cam.vup      = vec3(0, 1, 0);
-
     cam.defocus_angle = 0;
-
     cam.render(world);
-    
 }
 
 
@@ -611,5 +599,6 @@ int main() {
         case 10: tri_test(); break;
         case 11: final_submission(); break;
     }
+    return 0;
 }
 
