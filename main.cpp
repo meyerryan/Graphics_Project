@@ -28,7 +28,7 @@ color blue_gray = color(0.384, 0.482, 0.620);
 color dark_purple = color(0.180, 0.118, 0.259);
 
 
-int bouncing_spheres() {
+void bouncing_spheres() {
     hittable_list world;
 
     auto checker = make_shared<checker_texture>(0.32, color(.2, .3, .1), color(.9, .9, .9));
@@ -97,7 +97,7 @@ int bouncing_spheres() {
     cam.render(world);
 }
 
-int checkered_spheres() {
+void checkered_spheres() {
     hittable_list world;
 
     auto checker = make_shared<checker_texture>(0.32, color(.2, .3, .1), color(.9, .9, .9));
@@ -401,7 +401,7 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
     cam.render(world);
 }
 
-int tri_test() {
+void tri_test() {
     hittable_list world;
     std::string stl_file = "/Users/ryanmeyer1/Desktop/Blender Stuff/TEST_BOT.stl";
 
@@ -463,7 +463,7 @@ int tri_test() {
     cam.render(world);
 }
 
-int final_submission() {
+void final_submission() {
     hittable_list world;
 
     // Terrain parameters
