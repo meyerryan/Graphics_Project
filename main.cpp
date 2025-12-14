@@ -557,11 +557,11 @@ void final_submission() {
 
 
     //build suns 
-    auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 60.0);
+    auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 50.0);
     auto sun = make_shared<sphere>(point3(40, 25, 150), 10, sun_surface);
     world.add(sun);
 
-    auto mini_sun_surface = make_shared<diffuse_light>(dark_red * 40.0);
+    auto mini_sun_surface = make_shared<diffuse_light>(dark_red * 50.0);
     auto mini_sun = make_shared<sphere>(point3(20, 35, 150), 5, mini_sun_surface);
     world.add(mini_sun);
     
