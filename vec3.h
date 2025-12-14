@@ -1,7 +1,3 @@
-//
-// Created by Ryan M. on 9/14/25.
-//
-
 #ifndef GRAPHICS_PROJECT_VEC3_H
 #define GRAPHICS_PROJECT_VEC3_H
 
@@ -146,4 +142,4 @@ inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
     return r_out_perp + r_out_parallel;
 }
 
-#endif //GRAPHICS_PROJECT_VEC3_H
+#endif

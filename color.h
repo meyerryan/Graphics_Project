@@ -1,7 +1,3 @@
-//
-// Created by Ryan M. on 9/14/25.
-//
-
 #ifndef GRAPHICS_PROJECT_COLOR_H
 #define GRAPHICS_PROJECT_COLOR_H
 
@@ -44,4 +40,4 @@ void write_color(std::ostream& out, const color& pixel_color){
     
     out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
 }
-#endif //GRAPHICS_PROJECT_COLOR_H
+#endif

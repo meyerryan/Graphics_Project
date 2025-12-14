@@ -1,7 +1,3 @@
-//
-// Created by Ryan M. on 9/21/25.
-//
-
 #ifndef GRAPHICS_PROJECT_RAY_H
 #define GRAPHICS_PROJECT_RAY_H
 
@@ -34,4 +30,4 @@ class ray {
 
 };
 
-#endif //UNTITLED1_RAY_H
+#endif

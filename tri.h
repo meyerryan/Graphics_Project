@@ -20,7 +20,7 @@ class tri : public hittable {
     }
 
     virtual void set_bounding_box() {
-        // Compute the bounding box of all four vertices.
+        // Compute the bounding box of all three vertices.
         auto min_point = point3(
             std::fmin(std::fmin(v1.x(), v2.x()), v3.x()),
             std::fmin(std::fmin(v1.y(), v2.y()), v3.y()),
@@ -41,7 +41,7 @@ class tri : public hittable {
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
         auto denom = dot(normal, r.direction());
 
-        // No hit if the ray is parallel to the plane.
+        // No hit if the ray is parallel to the triangle plane.
         if (std::fabs(denom) < 1e-8)
             return false;
 
@@ -50,15 +50,15 @@ class tri : public hittable {
         if (!ray_t.contains(t))
             return false;
 
-        // Determine if the hit point lies within the planar shape using its plane coordinates.
+        // Compute the intersection point.
         auto intersection = r.at(t);
 
         // Compute barycentric coordinates using signed areas
-        vec3 area_abc = cross(v2 - v1, v3 - v1);  // 2x area of main triangle
+        vec3 area_abc = cross(v2 - v1, v3 - v1);  
         
-        vec3 na = cross(v3 - v2, intersection - v2);  // 2x area opposite v1
-        vec3 nb = cross(v1 - v3, intersection - v3);  // 2x area opposite v2
-        vec3 nc = cross(v2 - v1, intersection - v1);  // 2x area opposite v3
+        vec3 na = cross(v3 - v2, intersection - v2);  
+        vec3 nb = cross(v1 - v3, intersection - v3);  
+        vec3 nc = cross(v2 - v1, intersection - v1);  
         
         // Use dot product to get SIGNED area ratios
         double u = dot(na, area_abc) / dot(area_abc, area_abc);
@@ -67,8 +67,6 @@ class tri : public hittable {
 
         if (!is_interior(u, v, w, rec))
             return false;
-
-        // Ray hits the 2D shape; set the rest of the hit record and return true.
 
         rec.t = t;
         rec.p = intersection;
@@ -94,7 +92,6 @@ class tri : public hittable {
     vec3 w;
     shared_ptr<material> mat;
     aabb bbox;
-
     vec3 normal;
     double D;
 };

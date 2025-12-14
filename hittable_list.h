@@ -1,14 +1,9 @@
-//
-// Created by Ryan M. on 9/28/25.
-//
 #ifndef GRAPHICS_PROJECT_HITTABLE_LIST_H
 #define GRAPHICS_PROJECT_HITTABLE_LIST_H
 
 #include "rtweekend.h"
 #include "hittable.h"
 #include <vector>
-
-
 
 class hittable_list : public hittable {
   public:

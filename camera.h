@@ -8,22 +8,21 @@
 
 class camera {
   public:
-    double aspect_ratio = 1.0;  // Ratio of image width over height
-    int    image_width  = 100;  // Rendered image width in pixel count
-    int    samples_per_pixel = 10; // Count of random samples for each pixel
-    int    max_depth         = 10;   // Maximum number of ray bounces into scene
-    color background;
-    double vfov = 90.0;           // Vertical field of view in degrees
-    point3 lookfrom = point3(0,0,0); // Camera position
-    point3 lookat   = point3(0,0,-1); // Point camera is looking at
-    vec3   vup      = vec3(0,1,0); // "Up" direction for camera
-    double defocus_angle = 0;  // Variation angle of rays through each pixel
-    double focus_dist = 10;    // Distance from camera lookfrom point to plane of perfect focus
-    std::string output_filename = "image.ppm"; // Output file name
+    double aspect_ratio = 1.0;                  // Ratio of image width over height
+    int    image_width  = 100;                  // Rendered image width in pixel count
+    int    samples_per_pixel = 10;              // Count of random samples for each pixel
+    int    max_depth         = 10;              // Maximum number of ray bounces into scene
+    color background;                           // Background color for rays that miss
+    double vfov = 90.0;                         // Vertical field of view in degrees
+    point3 lookfrom = point3(0,0,0);            // Camera position
+    point3 lookat   = point3(0,0,-1);           // Point camera is looking at
+    vec3   vup      = vec3(0,1,0);              // "Up" direction for camera
+    double defocus_angle = 0;                   // Variation angle of rays through each pixel
+    double focus_dist = 10;                     // Distance from camera lookfrom point to plane of perfect focus
+    std::string output_filename = "image.ppm";  // Output file name
 
     void render(const hittable& world) {
         initialize();
-
         std::ofstream file(output_filename);
         if (!file) {
             std::cerr << "Could not open the file for writing.\n";
@@ -32,9 +31,7 @@ class camera {
 
         // Render
         file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-
         for(int j = 0; j < image_height; j++) {
-            //std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
             std::clog << "\rProgress: " << (double(j) / (image_height - 1)) * 100 << "% " << std::flush;
             for(int i = 0; i < image_width; i++) {
                 color pixel_color(0,0,0);
@@ -51,26 +48,23 @@ class camera {
     }
 
   private:
-    int    image_height;   // Rendered image height
-    double pixel_samples_scale; //Color scale factor for a sum of pixel samples
-    double reflectance = 0.5; // Surface reflectance factor
-    point3 center;         // Camera center
-    point3 pixel00_loc;    // Location of pixel 0, 0
-    vec3   pixel_delta_u;  // Offset to pixel to the right
-    vec3   pixel_delta_v;  // Offset to pixel below
-    vec3   u,v,w;      // Camera frame basis vectors
-    vec3   defocus_disk_u;       // Defocus disk horizontal radius
-    vec3   defocus_disk_v;       // Defocus disk vertical radius
+    int    image_height;        // Rendered image height
+    double pixel_samples_scale; // Color scale factor for a sum of pixel samples
+    double reflectance = 0.5;   // Surface reflectance factor
+    point3 center;              // Camera center
+    point3 pixel00_loc;         // Location of pixel 0, 0
+    vec3   pixel_delta_u;       // Offset to pixel to the right
+    vec3   pixel_delta_v;       // Offset to pixel below
+    vec3   u,v,w;               // Camera frame basis vectors
+    vec3   defocus_disk_u;      // Defocus disk horizontal radius
+    vec3   defocus_disk_v;      // Defocus disk vertical radius
 
     void initialize() {
         image_height = int(image_width / aspect_ratio);
         image_height = (image_height < 1) ? 1 : image_height;
-
         pixel_samples_scale = 1.0 / samples_per_pixel;
-
         center = lookfrom;
        
-
         // Determine viewport dimensions.
         auto theta = degrees_to_radians(vfov);
         auto h = std::tan(theta/2);
@@ -83,8 +77,8 @@ class camera {
         
 
         // Calculate the vectors across the horizontal and down the vertical viewport edges.
-        vec3 viewport_u = viewport_width * u;    // Vector across viewport horizontal edge
-        vec3 viewport_v = viewport_height * -v;  // Vector down viewport vertical edge
+        vec3 viewport_u = viewport_width * u;
+        vec3 viewport_v = viewport_height * -v;
 
         // Calculate the horizontal and vertical delta vectors from pixel to pixel.
         pixel_delta_u = viewport_u / image_width;
@@ -100,29 +94,20 @@ class camera {
         defocus_disk_v = v * defocus_radius;
     }
 
-        ray get_ray(int i, int j) const {
-        // Construct a camera ray originating from the origin and directed at randomly sampled
-        // point around the pixel location i, j.
-
+    ray get_ray(int i, int j) const {
         auto offset = sample_square();
-        auto pixel_sample = pixel00_loc
-                          + ((i + offset.x()) * pixel_delta_u)
-                          + ((j + offset.y()) * pixel_delta_v);
-
+        auto pixel_sample = pixel00_loc + ((i + offset.x()) * pixel_delta_u) + ((j + offset.y()) * pixel_delta_v);
         auto ray_origin = (defocus_angle <= 0) ? center : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
         auto ray_time = random_double();
-
         return ray(ray_origin, ray_direction, ray_time);
     }
 
     vec3 sample_square() const {
-        // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
         return vec3(random_double() - 0.5, random_double() - 0.5, 0);
     }
 
     point3 defocus_disk_sample() const {
-        // Returns a random point in the camera defocus disk.
         auto p = random_in_unit_disk();
         return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
     }
@@ -143,9 +128,6 @@ class camera {
 
     if (!rec.mat->scatter(r, rec, attenuation, scattered))
         return color_from_emission;
-
-
-    
 
     double scattering_pdf = rec.mat->scattering_pdf(r, rec, scattered);
     double pdf_value = scattering_pdf;

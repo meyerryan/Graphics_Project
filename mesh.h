@@ -33,16 +33,20 @@ private:
         std::string line;
         std::array<point3, 3> verts;
         int v = 0;
-
+        
+        // Read through the ASCII STL file line by line
         while (std::getline(in, line)) {
             std::istringstream iss(line);
             std::string token;
             iss >> token;
+            // only read vertex lines
             if (token == "vertex") {
                 double x, y, z;
+                // Read vertex coordinates
                 if (!(iss >> x >> y >> z)) continue;
                 verts[v++] = point3(x, y, z);
                 if (v == 3) {
+                    // We have 3 vertices, create a triangle
                     list->add(make_shared<tri>(verts[0], verts[1], verts[2], mat));
                     std::cout << "tri added: " << verts[0] << ", " << verts[1] << ", " << verts[2] << "\n";
                     v = 0;

@@ -442,7 +442,6 @@ void tri_test() {
 
     world.add(make_shared<quad>(point3(-5, 20, -5), vec3(10,0,0), vec3(0,0,10), light));
 
-    //world.add(make_shared<sphere>(point3(-5,0,-5), 2, glass));
     
     world = hittable_list(make_shared<bvh_node>(world));
 
@@ -466,25 +465,28 @@ void tri_test() {
     cam.render(world);
 }
 
+
+//attempt at Fractal Brownian motion terrain generation using Perlin noise
 void buildPerlinMap(double noise_map[200][200], int width, int height, double scale, double max_height) {
     perlin noise_gen;
     double second_pass = 0.05;
     double third_pass = 0.005;
 
+    //octave one
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             point3 p(x * scale, y * scale, 0);
             noise_map[y][x] = noise_gen.turb(p, 7) * max_height;
         }
     }
-
+    //octave two
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             point3 p(x * scale * second_pass, y * scale * second_pass, 0);
             noise_map[y][x] += noise_gen.turb(p, 7) * max_height * 2;
         }
     }
-
+    //octave three
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             point3 p(x * scale * third_pass, y * scale * third_pass, 0);
@@ -555,25 +557,25 @@ void final_submission() {
 
 
     //build suns 
-    auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 80.0);
+    auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 60.0);
     auto sun = make_shared<sphere>(point3(40, 25, 150), 10, sun_surface);
     world.add(sun);
 
-    auto mini_sun_surface = make_shared<diffuse_light>(dark_red * 5.0);
+    auto mini_sun_surface = make_shared<diffuse_light>(dark_red * 40.0);
     auto mini_sun = make_shared<sphere>(point3(20, 35, 150), 5, mini_sun_surface);
     world.add(mini_sun);
     
 
     //build background fog
-    auto fog_boundary = make_shared<sphere>(point3(100, -10, 170), 95, make_shared<lambertian>(blue_gray));
-    world.add(make_shared<constant_medium>(fog_boundary, 0.000001, dark_purple));
+    //auto fog_boundary = make_shared<sphere>(point3(100, -10, 170), 95, make_shared<lambertian>(blue_gray));
+    //world.add(make_shared<constant_medium>(fog_boundary, 0.000001, dark_purple));
 
     
     // Setup camera
     camera cam;
     cam.aspect_ratio      = 16.0/9.0;
-    cam.image_width       = 500;
-    cam.samples_per_pixel = 200;
+    cam.image_width       = 200;
+    cam.samples_per_pixel = 400;
     cam.max_depth         = 50;
     cam.background = dark_purple * 1.1;
     cam.vfov     = 40;
