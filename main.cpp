@@ -31,8 +31,9 @@ color sky_orange = hexConvert(0x993800);
 color violet = hexConvert(0x6205E6);
 color yellow = hexConvert(0xFFB700);
 color burnt_yellow = hexConvert(0xAD7D02);
+color dark_red = hexConvert(0x660000);
 
-int bouncing_spheres() {
+void bouncing_spheres() {
     hittable_list world;
 
     auto checker = make_shared<checker_texture>(0.32, color(.2, .3, .1), color(.9, .9, .9));
@@ -101,7 +102,7 @@ int bouncing_spheres() {
     cam.render(world);
 }
 
-int checkered_spheres() {
+void checkered_spheres() {
     hittable_list world;
 
     auto checker = make_shared<checker_texture>(0.32, color(.2, .3, .1), color(.9, .9, .9));
@@ -405,7 +406,7 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
     cam.render(world);
 }
 
-int tri_test() {
+void tri_test() {
     hittable_list world;
     std::string stl_file = "/Users/ryanmeyer1/Desktop/Blender Stuff/TEST_BOT.stl";
 
@@ -467,26 +468,56 @@ int tri_test() {
     cam.render(world);
 }
 
-int final_submission() {
-    hittable_list world;
-
-    // Terrain parameters
-    const int width = 200;
-    const int height = 200;
-    double tile_scale = 1.0;
-    double noise_scale = 0.03;
-    double max_height = 13.0; 
-    
-    double noise_map[height][width];
+void buildPerlinMap(double noise_map[200][200], int width, int height, double scale, double max_height) {
     perlin noise_gen;
-    
-    //build height map from perlin noise
+    double second_pass = 0.05;
+    double third_pass = 0.005;
+
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            point3 p(x * noise_scale, y * noise_scale, 0);
+            point3 p(x * scale, y * scale, 0);
             noise_map[y][x] = noise_gen.turb(p, 7) * max_height;
         }
     }
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            point3 p(x * scale * second_pass, y * scale * second_pass, 0);
+            noise_map[y][x] += noise_gen.turb(p, 7) * max_height * 2;
+        }
+    }
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            point3 p(x * scale * third_pass, y * scale * third_pass, 0);
+            noise_map[y][x] += noise_gen.turb(p, 7) * max_height * 2;
+        }
+    }
+}
+
+void final_submission() {
+    hittable_list world;
+
+    
+    const int width = 200;
+    const int height = 200;
+
+    // Terrain parameters
+    double terrain_noise_map[height][width];
+    double terrain_noise_map_first[height][width];
+    double terrain_noise_map_second[height][width];
+
+    double tile_scale = 1.0;
+    double noise_scale = 0.05;
+    double max_height = 5.0; 
+    
+    
+    double sky_noise_map[height][width];
+    
+    
+    //build height map from perlin noise
+    buildPerlinMap(terrain_noise_map, width + 1, height + 1, noise_scale, max_height);
+    buildPerlinMap(sky_noise_map, width + 1, height + 1, noise_scale, max_height);
 
     auto list = make_shared<hittable_list>();
 
@@ -495,10 +526,10 @@ int final_submission() {
     for (int i = 0; i < height; i = i + 1) {
         for (int j = 0; j < width; j = j + 1) {
             //build the two tris for each tile
-            point3 v0 = point3(i * tile_scale, noise_map[i][j], j * tile_scale);
-            point3 v1 = point3((i + 1) * tile_scale, noise_map[i + 1][j], j * tile_scale);
-            point3 v2 = point3(i * tile_scale, noise_map[i][j + 1], (j + 1) * tile_scale);
-            point3 v3 = point3((i + 1) * tile_scale, noise_map[i + 1][j + 1], (j + 1) * tile_scale);
+            point3 v0 = point3(i * tile_scale, terrain_noise_map[i][j], j * tile_scale);
+            point3 v1 = point3((i + 1) * tile_scale, terrain_noise_map[i + 1][j], j * tile_scale);
+            point3 v2 = point3(i * tile_scale, terrain_noise_map[i][j + 1], (j + 1) * tile_scale);
+            point3 v3 = point3((i + 1) * tile_scale, terrain_noise_map[i + 1][j + 1], (j + 1) * tile_scale);
             
             // Calculate average height for this quad
             double avg_height = (v0.y() + v1.y() + v2.y() + v3.y()) / 4.0;
@@ -517,6 +548,7 @@ int final_submission() {
                 terrain_color = golden_brown * (1 - t) + yellow * t;
             }
             
+            //make and add the two tries, using the 4 vertices and color 
             list->add(make_shared<tri>(v0, v1, v2, make_shared<lambertian>(terrain_color)));
             list->add(make_shared<tri>(v2, v1, v3, make_shared<lambertian>(terrain_color)));
 
@@ -533,14 +565,13 @@ int final_submission() {
 
 
     //build sun 
-    //auto sun_texture = make_shared<image_texture>("sunmap.jpg");
     auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 8.0);
-    auto sun = make_shared<sphere>(point3(100, -20, 150), 30, sun_surface);
+    auto sun = make_shared<sphere>(point3(100, -10, 170), 30, sun_surface);
     world.add(sun);
     
     //build background fog
-    auto fog_boundary = make_shared<sphere>(point3(100, -20, 150), 95, make_shared<lambertian>(blue_gray));
-    world.add(make_shared<constant_medium>(fog_boundary, 0.0001, blue_gray));
+    auto fog_boundary = make_shared<sphere>(point3(100, -10, 170), 95, make_shared<lambertian>(blue_gray));
+    world.add(make_shared<constant_medium>(fog_boundary, 0.00001, blue_gray));
 
 
 
@@ -549,13 +580,13 @@ int final_submission() {
     camera cam;
 
     cam.aspect_ratio      = 16.0/9.0;
-    cam.image_width       = 1920;
-    cam.samples_per_pixel = 250;
-    cam.max_depth         = 100;
-    cam.background = dark_purple;
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 50;
+    cam.max_depth         = 50;
+    cam.background = dark_purple * 0.5;
 
     cam.vfov     = 40;
-    cam.lookfrom = point3(width / 2, 10, 0);
+    cam.lookfrom = point3(width / 2, 15, 0);
     cam.lookat   = point3(width / 2, 0, 100);
     cam.vup      = vec3(0, 1, 0);
 
