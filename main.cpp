@@ -535,9 +535,9 @@ void final_submission() {
     camera cam;
 
     cam.aspect_ratio      = 16.0/9.0;
-    cam.image_width       = 800;
-    cam.samples_per_pixel = 50;
-    cam.max_depth         = 80;
+    cam.image_width       = 1920;
+    cam.samples_per_pixel = 100;
+    cam.max_depth         = 100;
     cam.background = dark_purple;
 
     cam.vfov     = 40;
