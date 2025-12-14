@@ -25,6 +25,47 @@ class solid_color : public texture {
     color albedo;
 };
 
+class gradient_texture_2 : public texture {
+  public:
+    gradient_texture_2(const color& c1, const color& c2) : c1(c1), c2(c2) {}
+
+    color value(double u, double v, const point3& p) const override {
+        return (1.0 - v) * c1 + v * c2;
+    }
+
+  private:
+    color c1;
+    color c2;
+};
+
+class gradient_texture_3 : public texture {
+  public:
+    gradient_texture_3(const color& c1, const color& c2, const color& c3) : c1(c1), c2(c2), c3(c3) {}
+
+    color value(double u, double v, const point3& p) const override {
+            float p1 = 0.3f;
+            float p2 = 0.6f;
+            float p3 = 1.0 - p2 - p1;
+
+            if (v < p1) {
+                double t = v / p1;
+                return c1 * (1 - t) + c2 * t;
+            } else if (v < p2 + p1) {
+                double t = (v - p1) / p2;
+                return c2 * (1 - t) + c3 * t;
+            } else {
+                double t = (v - p2) / p3;
+                return c3 * (1 - t) + c1 * t;
+            }
+    }
+
+  private:
+    color c1;
+    color c2;
+    color c3;
+};
+
+
 class checker_texture : public texture {
   public:
     checker_texture(double scale, shared_ptr<texture> even, shared_ptr<texture> odd)

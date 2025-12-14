@@ -19,6 +19,13 @@ inline double linear_to_gamma(double linear_component) {
     return 0.0;
 }
 
+inline color hexConvert(int hexValue) {
+    double r = ((hexValue >> 16) & 0xFF) / 255.0;
+    double g = ((hexValue >> 8) & 0xFF) / 255.0;
+    double b = (hexValue & 0xFF) / 255.0;
+    return color(r, g, b);
+}
+
 void write_color(std::ostream& out, const color& pixel_color){
     auto r = pixel_color.x();
     auto g = pixel_color.y();

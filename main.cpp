@@ -15,20 +15,24 @@
 #include <string>
 
 
-//Color gradient definitions
-color white = color(1.0,1.0,1.0);
-color blue = color(0.5,0.7,1.0);
-color red = color(1.0,0.0,0.0);
-color black = color(0.0,0.0,0.0);
-color sky_blue = color(0.70,0.80,1.00);
-color dark_brown = color(0.322, 0.129, 0.0);
-color orange_brown = color(0.761, 0.325, 0.039);
-color golden_brown = color(0.761, 0.494, 0.039);
-color blue_gray = color(0.384, 0.482, 0.620);
-color dark_purple = color(0.180, 0.118, 0.259);
+//Color definitions
+color white = hexConvert(0xFFFFFF);
+color blue = hexConvert(0x7FB2FF);
+color red = hexConvert(0xFF0000);
+color green = hexConvert(0x00FF00);
+color black = hexConvert(0x000000);
+color sky_blue = hexConvert(0xB3CCFF);
+color dark_brown = hexConvert(0x522E0E);
+color orange_brown = hexConvert(0xC75B12);
+color golden_brown = hexConvert(0xC27D0E);
+color blue_gray = hexConvert(0x375a66);
+color dark_purple = hexConvert(0x16062E);
+color sky_orange = hexConvert(0x993800);
+color violet = hexConvert(0x6205E6);
+color yellow = hexConvert(0xFFB700);
+color burnt_yellow = hexConvert(0xAD7D02);
 
-
-void bouncing_spheres() {
+int bouncing_spheres() {
     hittable_list world;
 
     auto checker = make_shared<checker_texture>(0.32, color(.2, .3, .1), color(.9, .9, .9));
@@ -97,7 +101,7 @@ void bouncing_spheres() {
     cam.render(world);
 }
 
-void checkered_spheres() {
+int checkered_spheres() {
     hittable_list world;
 
     auto checker = make_shared<checker_texture>(0.32, color(.2, .3, .1), color(.9, .9, .9));
@@ -401,7 +405,7 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
     cam.render(world);
 }
 
-void tri_test() {
+int tri_test() {
     hittable_list world;
     std::string stl_file = "/Users/ryanmeyer1/Desktop/Blender Stuff/TEST_BOT.stl";
 
@@ -463,7 +467,7 @@ void tri_test() {
     cam.render(world);
 }
 
-void final_submission() {
+int final_submission() {
     hittable_list world;
 
     // Terrain parameters
@@ -476,7 +480,7 @@ void final_submission() {
     double noise_map[height][width];
     perlin noise_gen;
     
-
+    //build height map from perlin noise
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             point3 p(x * noise_scale, y * noise_scale, 0);
@@ -486,8 +490,11 @@ void final_submission() {
 
     auto list = make_shared<hittable_list>();
 
+
+    //build terrain from height map
     for (int i = 0; i < height; i = i + 1) {
         for (int j = 0; j < width; j = j + 1) {
+            //build the two tris for each tile
             point3 v0 = point3(i * tile_scale, noise_map[i][j], j * tile_scale);
             point3 v1 = point3((i + 1) * tile_scale, noise_map[i + 1][j], j * tile_scale);
             point3 v2 = point3(i * tile_scale, noise_map[i][j + 1], (j + 1) * tile_scale);
@@ -495,22 +502,19 @@ void final_submission() {
             
             // Calculate average height for this quad
             double avg_height = (v0.y() + v1.y() + v2.y() + v3.y()) / 4.0;
-            double height_factor = std::min(avg_height / max_height, 1.0);  // Normalize to [0,1]
+            double height_factor = std::min(avg_height / max_height, 1.0);
             
-            
+            //interpolation function: f = f1 * (1 - t) + f2 * t
             color terrain_color;
             if (height_factor < 0.3) {
                 double t = height_factor / 0.3;
-                // Interpolate from dark_brown (0.322, 0.129, 0.0) to orange_brown (0.761, 0.325, 0.039)
-                terrain_color = color(0.322 + t * 0.439, 0.129 + t * 0.196, 0.0 + t * 0.039);
+                terrain_color = dark_brown * (1 - t) + orange_brown * t;
             } else if (height_factor < 0.5) {
                 double t = (height_factor - 0.3) / 0.2;
-                // Interpolate from orange_brown (0.761, 0.325, 0.039) to golden_brown (0.761, 0.494, 0.039)
-                terrain_color = color(0.761, 0.325 + t * 0.169, 0.039);
+                terrain_color = orange_brown * (1 - t) + golden_brown * t;
             } else {
                 double t = (height_factor - 0.5) / 0.5;
-                // Interpolate from golden_brown (0.761, 0.494, 0.039) to white (1.0, 1.0, 1.0)
-                terrain_color = color(0.761 + t * 0.239, 0.494 + t * 0.506, 0.039 + t * 0.961);
+                terrain_color = golden_brown * (1 - t) + yellow * t;
             }
             
             list->add(make_shared<tri>(v0, v1, v2, make_shared<lambertian>(terrain_color)));
@@ -518,26 +522,36 @@ void final_submission() {
 
         }
     }
-
     shared_ptr<hittable> terrain = make_shared<bvh_node>(*list);
-
-    auto red_square = make_shared<quad>(point3(-50, 0, 150), vec3(300, 0, 0), vec3(0, 100, 0), make_shared<lambertian>(dark_purple));
-    
-
-    world.add(red_square);
-
     world.add(terrain);
 
 
+    //build sky quad
+    auto sky_texture = make_shared<gradient_texture_3>(yellow, red, dark_purple);
+    auto sky = make_shared<quad>(point3(-50, 0, 150), vec3(300, 0, 0), vec3(0, 100, 0), make_shared<lambertian>(sky_texture));
+    world.add(sky);
 
 
+    //build sun 
+    //auto sun_texture = make_shared<image_texture>("sunmap.jpg");
+    auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 8.0);
+    auto sun = make_shared<sphere>(point3(100, -20, 150), 30, sun_surface);
+    world.add(sun);
+    
+    //build background fog
+    auto fog_boundary = make_shared<sphere>(point3(100, -20, 150), 95, make_shared<lambertian>(blue_gray));
+    world.add(make_shared<constant_medium>(fog_boundary, 0.0001, blue_gray));
+
+
+
+    
         // Setup camera
     camera cam;
 
     cam.aspect_ratio      = 16.0/9.0;
-    cam.image_width       = 1920;
-    cam.samples_per_pixel = 100;
-    cam.max_depth         = 100;
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 50;
+    cam.max_depth         = 50;
     cam.background = dark_purple;
 
     cam.vfov     = 40;
