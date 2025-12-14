@@ -21,6 +21,11 @@ color blue = color(0.5,0.7,1.0);
 color red = color(1.0,0.0,0.0);
 color black = color(0.0,0.0,0.0);
 color sky_blue = color(0.70,0.80,1.00);
+color dark_brown = color(0.322, 0.129, 0.0);
+color orange_brown = color(0.761, 0.325, 0.039);
+color golden_brown = color(0.761, 0.494, 0.039);
+color blue_gray = color(0.384, 0.482, 0.620);
+color dark_purple = color(0.180, 0.118, 0.259);
 
 
 int bouncing_spheres() {
@@ -461,44 +466,65 @@ int tri_test() {
 int final_submission() {
     hittable_list world;
 
-    int x = 50;
-    int z = 100;
+    // Terrain parameters
+    const int width = 200;
+    const int height = 200;
     double tile_scale = 1.0;
-    double height_scale = 2.0;;
+    double noise_scale = 0.03;
+    double max_height = 13.0; 
+    
+    double noise_map[height][width];
+    perlin noise_gen;
+    
 
-    double height_map[x][z];
-
-
-
-    for (int i = 0; i < x; i++) {
-        for (int j = 0; j < z; j++) {
-            double x_percent = i / (double)(x - 1);
-            double z_percent = j / (double)(z - 1);
-
-            double random_seed = rand() % 101;
-            double seed_percent = random_seed / 100.0;
-            double scaled_value = seed_percent * height_scale * x_percent; // Scale heights between 0 and 5
-            height_map[i][j] = scaled_value;
-            std::cout << height_map[i][j] << " ";
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            point3 p(x * noise_scale, y * noise_scale, 0);
+            noise_map[y][x] = noise_gen.turb(p, 7) * max_height;
         }
-        std::cout << std::endl;
     }
 
     auto list = make_shared<hittable_list>();
 
-    for (int i = 0; i < x; i = i + 1) {
-        for (int j = 0; j < z; j = j + 1) {
-            point3 v0 = point3(i * tile_scale, height_map[i][j], j * tile_scale);
-            point3 v1 = point3((i + 1) * tile_scale, height_map[i + 1][j], j * tile_scale);
-            point3 v2 = point3(i * tile_scale, height_map[i][j + 1], (j + 1) * tile_scale);
-            point3 v3 = point3((i + 1) * tile_scale, height_map[i + 1][j + 1], (j + 1) * tile_scale);
-            list->add(make_shared<tri>(v0, v1, v2, make_shared<lambertian>(color(i/(double)x, 1, j/(double)z))));
-            list->add(make_shared<tri>(v2, v1, v3, make_shared<lambertian>(color(i/(double)x, 0.8, j/(double)z))));
-        
+    for (int i = 0; i < height; i = i + 1) {
+        for (int j = 0; j < width; j = j + 1) {
+            point3 v0 = point3(i * tile_scale, noise_map[i][j], j * tile_scale);
+            point3 v1 = point3((i + 1) * tile_scale, noise_map[i + 1][j], j * tile_scale);
+            point3 v2 = point3(i * tile_scale, noise_map[i][j + 1], (j + 1) * tile_scale);
+            point3 v3 = point3((i + 1) * tile_scale, noise_map[i + 1][j + 1], (j + 1) * tile_scale);
+            
+            // Calculate average height for this quad
+            double avg_height = (v0.y() + v1.y() + v2.y() + v3.y()) / 4.0;
+            double height_factor = std::min(avg_height / max_height, 1.0);  // Normalize to [0,1]
+            
+            
+            color terrain_color;
+            if (height_factor < 0.3) {
+                double t = height_factor / 0.3;
+                // Interpolate from dark_brown (0.322, 0.129, 0.0) to orange_brown (0.761, 0.325, 0.039)
+                terrain_color = color(0.322 + t * 0.439, 0.129 + t * 0.196, 0.0 + t * 0.039);
+            } else if (height_factor < 0.5) {
+                double t = (height_factor - 0.3) / 0.2;
+                // Interpolate from orange_brown (0.761, 0.325, 0.039) to golden_brown (0.761, 0.494, 0.039)
+                terrain_color = color(0.761, 0.325 + t * 0.169, 0.039);
+            } else {
+                double t = (height_factor - 0.5) / 0.5;
+                // Interpolate from golden_brown (0.761, 0.494, 0.039) to white (1.0, 1.0, 1.0)
+                terrain_color = color(0.761 + t * 0.239, 0.494 + t * 0.506, 0.039 + t * 0.961);
+            }
+            
+            list->add(make_shared<tri>(v0, v1, v2, make_shared<lambertian>(terrain_color)));
+            list->add(make_shared<tri>(v2, v1, v3, make_shared<lambertian>(terrain_color)));
+
         }
     }
 
     shared_ptr<hittable> terrain = make_shared<bvh_node>(*list);
+
+    auto red_square = make_shared<quad>(point3(-50, 0, 150), vec3(300, 0, 0), vec3(0, 100, 0), make_shared<lambertian>(dark_purple));
+    
+
+    world.add(red_square);
 
     world.add(terrain);
 
@@ -509,14 +535,14 @@ int final_submission() {
     camera cam;
 
     cam.aspect_ratio      = 16.0/9.0;
-    cam.image_width       = 400;
-    cam.samples_per_pixel = 30;
-    cam.max_depth         = 50;
-    cam.background = sky_blue;
+    cam.image_width       = 800;
+    cam.samples_per_pixel = 50;
+    cam.max_depth         = 80;
+    cam.background = dark_purple;
 
-    cam.vfov     = 80;
-    cam.lookfrom = point3(x / 2, 5, 20);
-    cam.lookat   = point3(x / 2, 0, 5);
+    cam.vfov     = 40;
+    cam.lookfrom = point3(width / 2, 10, 0);
+    cam.lookat   = point3(width / 2, 0, 100);
     cam.vup      = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
@@ -542,11 +568,3 @@ int main() {
     }
 }
 
-
-
-
-
-// TODO 
-/**
- * Do 8 anti-aliasing
- */
