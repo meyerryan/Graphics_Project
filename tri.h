@@ -50,7 +50,6 @@ class tri : public hittable {
         if (!ray_t.contains(t))
             return false;
 
-        // Compute the intersection point.
         auto intersection = r.at(t);
 
         // Compute barycentric coordinates using signed areas
@@ -60,7 +59,7 @@ class tri : public hittable {
         vec3 nb = cross(v1 - v3, intersection - v3);  
         vec3 nc = cross(v2 - v1, intersection - v1);  
         
-        // Use dot product to get SIGNED area ratios
+        // Use dot product to get area ratios
         double u = dot(na, area_abc) / dot(area_abc, area_abc);
         double v = dot(nb, area_abc) / dot(area_abc, area_abc);
         double w = dot(nc, area_abc) / dot(area_abc, area_abc);
@@ -77,11 +76,11 @@ class tri : public hittable {
     }
 
     virtual bool is_interior(double u, double v, double w, hit_record& rec) const {
-        // Check if barycentric coordinates are all non-negative (point is inside triangle)
+        // Check if barycentric coord are all non-negative
         if (u < 0 || v < 0 || w < 0)
             return false;
 
-        // Set UV coordinates for texture mapping (using first two barycentric coords)
+        // Set UV coordinates for texture mapping
         rec.u = v;
         rec.v = w;
         return true;

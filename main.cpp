@@ -32,6 +32,7 @@ color violet = hexConvert(0x6205E6);
 color yellow = hexConvert(0xFFB700);
 color burnt_yellow = hexConvert(0xAD7D02);
 color dark_red = hexConvert(0x660000);
+color salmon = hexConvert(0xFF6054);
 
 void bouncing_spheres() {
     hittable_list world;
@@ -482,15 +483,15 @@ void buildPerlinMap(double noise_map[200][200], int width, int height, double sc
     //octave two
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            point3 p(x * scale * second_pass, y * scale * second_pass, 0);
-            noise_map[y][x] += noise_gen.turb(p, 7) * max_height * 2;
+            point3 p(x * second_pass, y * second_pass, 0);
+            noise_map[y][x] += noise_gen.turb(p * 1.5, 7) * max_height * 0.15;
         }
     }
     //octave three
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            point3 p(x * scale * third_pass, y * scale * third_pass, 0);
-            noise_map[y][x] += noise_gen.turb(p, 7) * max_height * 2;
+            point3 p(x * third_pass, y * third_pass, 0);
+            noise_map[y][x] += noise_gen.turb(p * 6, 7) * max_height * 0.05;
         }
     }
 }
@@ -503,8 +504,8 @@ void final_submission() {
     // Terrain parameters
     double terrain_noise_map[height][width];
     double tile_scale = 1.0;
-    double noise_scale = 0.05;
-    double max_height = 5.0; 
+    double noise_scale = 0.005;
+    double max_height = 35.0; 
     double sky_noise_map[height][width];
     
     
@@ -558,13 +559,16 @@ void final_submission() {
 
     //build suns 
     auto sun_surface = make_shared<diffuse_light>(burnt_yellow * 50.0);
-    auto sun = make_shared<sphere>(point3(40, 25, 150), 10, sun_surface);
+    auto sun = make_shared<sphere>(point3(50, 25, 155), 10, sun_surface);
     world.add(sun);
 
-    auto mini_sun_surface = make_shared<diffuse_light>(dark_red * 50.0);
+    auto mini_sun_surface = make_shared<diffuse_light>(salmon * 50.0);
     auto mini_sun = make_shared<sphere>(point3(20, 35, 150), 5, mini_sun_surface);
     world.add(mini_sun);
     
+    auto sun_light_surface = make_shared<diffuse_light>(white * 7.0);
+    auto sun_light = make_shared<sphere>(point3(100, 150, 100), 40, sun_light_surface);
+    world.add(sun_light);
 
     //build background fog
     //auto fog_boundary = make_shared<sphere>(point3(100, -10, 170), 95, make_shared<lambertian>(blue_gray));
@@ -574,15 +578,14 @@ void final_submission() {
     // Setup camera
     camera cam;
     cam.aspect_ratio      = 16.0/9.0;
-    cam.image_width       = 200;
-    cam.samples_per_pixel = 400;
+    cam.image_width       = 1920;
+    cam.samples_per_pixel = 500;
     cam.max_depth         = 50;
-    cam.background = dark_purple * 1.1;
+    cam.background = dark_purple * 0.5;
     cam.vfov     = 40;
     cam.lookfrom = point3(width / 2, 15, 0);
     cam.lookat   = point3(width / 2, 0, 100);
     cam.vup      = vec3(0, 1, 0);
-    cam.defocus_angle = 0;
     cam.render(world);
 }
 
